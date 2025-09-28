@@ -42,6 +42,10 @@ function App() {
           element={isAuthenticated ? <Dashboard onLogout={() => setIsAuthenticated(false)} /> : <Navigate to="/login" />}
         />
         <Route
+          path="/templates/new/:id"
+          element={isAuthenticated ? <TemplateEditor /> : <Navigate to="/login" />}
+        />
+        <Route
           path="/templates/new"
           element={isAuthenticated ? <TemplateEditor /> : <Navigate to="/login" />}
         />

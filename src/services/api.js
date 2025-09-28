@@ -26,6 +26,7 @@ export const templatesAPI = {
   create: (template) => API.post('/templates/post', template),
   update: (id, template) => API.put(`/templates/${id}`, template),
   delete: (id) => API.delete(`/templates/${id}`),
+  sendMail: (id) => API.post(`/templates/${id}/send-mail`)  // <--- new route
 };
 
 // Companies API (for TemplateEditor)

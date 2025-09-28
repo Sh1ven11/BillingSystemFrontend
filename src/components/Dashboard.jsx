@@ -47,30 +47,54 @@ const Dashboard = ({ onLogout }) => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Dashboard</h1>
-        <button className="btn btn-outline-danger" onClick={handleLogout}>Logout</button>
-      </div>
-
-      <div className="card mb-4">
-        <div className="card-header d-flex justify-content-between">
-          <h5>Templates</h5>
-          <Link to="/templates/new" className="btn btn-primary btn-sm">Create New Template</Link>
-        </div>
+        <div className="container mt-4">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h1>Dashboard</h1>
+            <button className="btn btn-outline-danger" onClick={handleLogout}>Logout</button>
+          </div>
+        <div className="card mb-4">
+          <div className="card-header d-flex justify-content-between">
+            <h5>Templates</h5>
+            <Link to="/templates/new" className="btn btn-primary btn-sm">Create New Template</Link>
+          </div>
         <div className="card-body">
           {templates.length === 0 ? <p>No templates yet</p> : (
             <div className="list-group">
               {templates.map(t => (
-                <div key={t.id} className="list-group-item">
-                  <h6>{t.name}</h6>
-                  <p>{t.subject}</p>
+                <div key={t.id} className="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 className="mb-1">{t.name}</h6>
+                    <p className="mb-1">{t.subject}</p>
+                  </div>
+                  <div>
+                    {/* Edit Template */}
+                    <Link to={`/templates/new/${t.id}`} className="btn btn-sm btn-outline-secondary me-2">
+                      Edit
+                    </Link>
+
+                    {/* Mail Template */}
+                    <button
+                      className="btn btn-sm btn-success"
+                      onClick={async () => {
+                        try {
+                          await templatesAPI.sendMail(t.id); // <-- you’ll add this API function
+                          alert(`Mail sent for template "${t.name}"`);
+                        } catch (err) {
+                          console.error(err);
+                          alert("Failed to send mail");
+                        }
+                      }}
+                    >
+                      Mail
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
+
 
       <div className="card">
         <div className="card-header">
