@@ -1,17 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { templatesAPI, companiesAPI } from '../services/api';
+import { useParams } from 'react-router-dom';
 
 const TemplateEditor = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const [companies, setCompanies] = useState([]);
   const [selectedCompanies, setSelectedCompanies] = useState([]);
   const [formData, setFormData] = useState({ name: '', subject: '', body: '', mail:'' });
   const [loading, setLoading] = useState(false);
+  const [selectedColumns, setSelectedColumns] = useState([]);
 
   useEffect(() => {
     fetchCompanies();
-  }, []);
+    if(id){
+      const fetchTemplate = async () => {
+        try {
+          const res = await templatesAPI.getOne(id);
+          setFormData({
+            name: res.data.template.name,
+            subject: res.data.template.subject,
+            body: res.data.template.body,
+            mail: res.data.template.to_mail,
+            selected_columns: res.data.template.selected_columns || []
+          });
+          setSelectedCompanies(res.data.template.companies.map(c => c.company_id));
+        } catch (err) {
+          console.error(err);
+        }
+      };
+      fetchTemplate();
+    }
+  }, [id]);
 
   const fetchCompanies = async () => {
     try {
@@ -27,13 +48,18 @@ const TemplateEditor = () => {
     e.preventDefault();
     console.log("hi from here");
     setLoading(true);
+    if(id){
+      await templatesAPI.update(id, { ...formData, company_ids: selectedCompanies,selectedColumns:formData.selected_columns });
+      navigate('/dashboard');
+    }else{
     try {
-      await templatesAPI.create({ ...formData, company_ids: selectedCompanies });
+      await templatesAPI.create({ ...formData, company_ids: selectedCompanies,selectedColumns:formData.selected_columns });
       navigate('/dashboard');
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
     }
   };
 
@@ -63,8 +89,32 @@ const TemplateEditor = () => {
         </div>
         <div className="mb-3">
           <label>Body</label>
-          <textarea className="form-control" value={formData.body} onChange={e => setFormData({ ...formData, body: e.target.value })} rows={5} required></textarea>
+          <textarea className="form-control" value={formData.body} placeholder='{{company_name}} for company name {{total_amount}} for total amount' onChange={e => setFormData({ ...formData, body: e.target.value })} rows={5} required></textarea>
         </div>
+        <div className="mb-3">
+        <label>Select Columns for Personalization</label>
+        <div>
+          {["company_name", "inv_no", "amount_unpaid","inv_date","bill_amount"].map(col => (
+            <div key={col} className="form-check">
+              <input 
+                type="checkbox" 
+                className="form-check-input" 
+                checked={formData.selected_columns?.includes(col)} 
+                onChange={() => {
+                  setFormData(prev => ({
+                    ...prev,
+                    selected_columns: prev.selected_columns?.includes(col)
+                      ? prev.selected_columns.filter(c => c !== col)
+                      : [...(prev.selected_columns || []), col]
+                  }));
+                }}
+              />
+              <label className="form-check-label">{col}</label>
+            </div>
+          ))}
+        </div>
+      </div>
+
         <div className="mb-3">
           <label>Companies</label>
           <button type="button" className="btn btn-sm btn-link" onClick={selectAll}>{selectedCompanies.length === companies.length ? 'Deselect All' : 'Select All'}</button>
