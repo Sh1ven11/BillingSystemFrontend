@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create Axios instance
 const API = axios.create({
-  baseURL: 'https://billingsystembackend-xinn.onrender.com',
+  baseURL: 'https://billingsystembackend-xinn.onrender.com/api',
   withCredentials: true // important to send session cookie
 });
 
