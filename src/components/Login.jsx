@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { authAPI } from '../services/api';
+import { useAuth } from '../components/Auth/authProvider'; // Use the hook
+//import { authAPI } from '../services/api';
 
-const Login = ({ onLogin }) => {
+const Login = () => {
+  const { login } = useAuth(); // Get the login function from context
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,31 +16,18 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
+    
+    // Check for empty fields
+    if (!credentials.email || !credentials.password) {
+      setError('Please enter both email and password.');
+      setLoading(false);
+      return;
+    }
+    
     try {
-      // 1. Login first
-      const loginResponse = await authAPI.login(credentials);
-      console.log('Login response:', loginResponse.data);
-
-      // 2. Immediately test the session
-      const sessionResponse = await authAPI.checkAuth();
-      console.log('Session check after login:', sessionResponse.data);
-
-      // 3. Also call debug-session to see everything
-      try {
-        const debugResponse = await fetch('https://billingsystembackend-xinn.onrender.com/api/debug-session', {
-          credentials: 'include' // Important for cookies
-        });
-        const debugData = await debugResponse.json();
-        console.log('Debug session:', debugData);
-      } catch (debugError) {
-        console.error('Debug session failed:', debugError);
-      }
-
-      onLogin();
+      await login(credentials); // Call the login function from the context
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
-      console.error('Login error:', err);
+      setError(err.message || 'Login failed.');
     } finally {
       setLoading(false);
     }

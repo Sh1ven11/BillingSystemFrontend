@@ -1,72 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { authAPI } from '../services/api';
+import { billsAPI, templatesAPI, authAPI } from '../services/api';
+import { useAuth } from '../components/Auth/authProvider';
 
-const Dashboard = ({ onLogout }) => {
+const Dashboard = () => {
+  const { logout } = useAuth();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [unpaidData, setUnpaidData] = useState({ companies: [], totalAmount: 0, totalCount: 0 });
   const [expandedCompanies, setExpandedCompanies] = useState([]);
-  const [sessionInfo, setSessionInfo] = useState('');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    checkSessionAndLoadData();
-  }, []);
+    const loadDashboardData = async () => {
+      try {
+        const [templatesRes, billsRes] = await Promise.all([
+          templatesAPI.getAll(),
+          billsAPI.getUnpaidGrouped()
+        ]);
 
-  const checkSessionAndLoadData = async () => {
-    try {
-      // First, check what the session looks like
-      const debugResponse = await fetch('https://billingsystembackend-xinn.onrender.com/api/debug-session', {
-        credentials: 'include'
-      });
-      const debugData = await debugResponse.json();
-      console.log('Dashboard session debug:', debugData);
-      
-      setSessionInfo(`Session: ${debugData.isAuthenticated ? 'AUTHENTICATED' : 'NOT AUTHENTICATED'}`);
-
-      if (!debugData.isAuthenticated) {
-        console.error('Session not authenticated in dashboard');
-        return;
+        setTemplates(templatesRes.data.templates || []);
+        const companies = billsRes.data.companies_with_unpaid_bills ;
+        setUnpaidData({ companies: companies || [], totalAmount: billsRes.data.total_amount || 0, totalCount: billsRes.data.total_count || 0 });
+        //setUnpaidData(companies:billsRes.data.unpaidData || { companies: [], totalAmount: 0, totalCount: 0 });
+        setError(null);
+      } catch (err) {
+        console.error('Dashboard data load error:', err);
+        setError('Failed to load dashboard data.');
+        if (err.response?.status === 401) {
+          logout();
+        }
+      } finally {
+        setLoading(false);
       }
-
-      // Load mock data since we don't have other APIs
-      setTemplates([
-        { id: 1, name: 'Invoice Template', subject: 'Monthly Invoice' },
-        { id: 2, name: 'Payment Reminder', subject: 'Urgent Payment Required' }
-      ]);
-      
-      setUnpaidData({
-        companies: [
-          { 
-            id: 1, 
-            name: 'Demo Company', 
-            bills: [
-              { id: 1, inv_no: 'INV-001', amount_unpaid: 5000 },
-              { id: 2, inv_no: 'INV-002', amount_unpaid: 3000 }
-            ]
-          }
-        ],
-        totalAmount: 8000,
-        totalCount: 2
-      });
-
-    } catch (err) {
-      console.error('Dashboard error:', err);
-      setSessionInfo('Error checking session');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    loadDashboardData();
+  }, [logout]);
 
   const handleLogout = async () => {
     try {
       await authAPI.logout();
     } catch (err) {
-      console.error('Logout error:', err);
+      console.error('Logout API call failed:', err);
     }
-    if (onLogout && typeof onLogout === 'function') {
-      onLogout();
-    }
+    logout();
   };
 
   const toggleCompany = (id) => {
@@ -80,6 +57,7 @@ const Dashboard = ({ onLogout }) => {
   };
 
   if (loading) return <div className="container mt-4">Loading...</div>;
+  if (error) return <div className="container mt-4 alert alert-danger">{error}</div>;
 
   return (
     <div className="container mt-4">
@@ -90,13 +68,6 @@ const Dashboard = ({ onLogout }) => {
         </button>
       </div>
 
-      {/* Session Debug Info */}
-      {sessionInfo && (
-        <div className={`alert ${sessionInfo.includes('AUTHENTICATED') ? 'alert-success' : 'alert-warning'}`}>
-          {sessionInfo}
-        </div>
-      )}
-
       <div className="card mb-4">
         <div className="card-header d-flex justify-content-between">
           <h5>Templates</h5>
@@ -105,27 +76,24 @@ const Dashboard = ({ onLogout }) => {
           </Link>
         </div>
         <div className="card-body">
-          <div className="list-group">
-            {templates.map(t => (
-              <div key={t.id} className="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                  <h6 className="mb-1">{t.name}</h6>
-                  <p className="mb-1">{t.subject}</p>
+          {templates && templates.length > 0 ? (
+            <div className="list-group">
+              {templates.map(t => (
+                <div key={t.id} className="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 className="mb-1">{t.name}</h6>
+                    <p className="mb-1">{t.subject}</p>
+                  </div>
+                  <div>
+                    <Link to={`/templates/new/${t.id}`} className="btn btn-sm btn-outline-secondary me-2">Edit</Link>
+                    <button className="btn btn-sm btn-success" onClick={() => handleSendMail(t.id, t.name)}>Mail</button>
+                  </div>
                 </div>
-                <div>
-                  <Link to={`/templates/new/${t.id}`} className="btn btn-sm btn-outline-secondary me-2">
-                    Edit
-                  </Link>
-                  <button
-                    className="btn btn-sm btn-success"
-                    onClick={() => handleSendMail(t.id, t.name)}
-                  >
-                    Mail
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div>No templates found.</div>
+          )}
         </div>
       </div>
 
@@ -136,27 +104,31 @@ const Dashboard = ({ onLogout }) => {
           <span className="ms-2">Total Amount: ₹{unpaidData.totalAmount}</span>
         </div>
         <div className="card-body">
-          {unpaidData.companies.map(c => (
-            <div key={c.id} className="mb-3">
-              <div className="d-flex justify-content-between align-items-center">
-                <h6>{c.name} ({c.bills.length} bills)</h6>
-                <button
-                  className="btn btn-sm btn-outline-primary"
-                  onClick={() => toggleCompany(c.id)}
-                >
-                  {expandedCompanies.includes(c.id) ? "Hide Bills" : "Show Bills"}
-                </button>
+          {unpaidData.companies && unpaidData.companies.length > 0 ? (
+            unpaidData.companies.map(c => (
+              <div key={c.id} className="mb-3">
+                <div className="d-flex justify-content-between align-items-center">
+                  <h6>{c.name} ({c.bills.length} bills)</h6>
+                  <button
+                    className="btn btn-sm btn-outline-primary"
+                    onClick={() => toggleCompany(c.id)}
+                  >
+                    {expandedCompanies.includes(c.id) ? "Hide Bills" : "Show Bills"}
+                  </button>
+                </div>
+                {expandedCompanies.includes(c.id) && (
+                  <ul className="mt-2">
+                    {c.bills.map(b => (
+                      <li key={b.id}>{b.inv_no} - ₹{b.amount_unpaid}</li>
+                    ))}
+                  </ul>
+                )}
+                <hr />
               </div>
-              {expandedCompanies.includes(c.id) && (
-                <ul className="mt-2">
-                  {c.bills.map(b => (
-                    <li key={b.id}>{b.inv_no} - ₹{b.amount_unpaid}</li>
-                  ))}
-                </ul>
-              )}
-              <hr />
-            </div>
-          ))}
+            ))
+          ) : (
+            <div>No unpaid bills found.</div>
+          )}
         </div>
       </div>
     </div>
