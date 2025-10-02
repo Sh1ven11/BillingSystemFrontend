@@ -51,10 +51,16 @@ const Dashboard = () => {
       prev.includes(id) ? prev.filter(cid => cid !== id) : [...prev, id]
     );
   };
-
-  const handleSendMail = (templateId, templateName) => {
-    alert(`Would send mail for: ${templateName}`);
+  const handleSendMail = async (templateId, templateName) => {
+    try {
+      await templatesAPI.sendMail(templateId);
+      alert('Email sent successfully.');
+    } catch (err) {
+      console.error('Send mail error:', err);
+      alert('Failed to send email.');
+    }
   };
+
 
   if (loading) return <div className="container mt-4">Loading...</div>;
   if (error) return <div className="container mt-4 alert alert-danger">{error}</div>;
