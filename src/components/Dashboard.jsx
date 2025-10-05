@@ -92,27 +92,47 @@ const Dashboard = () => {
             Create New Template
           </Link>
         </div>
-        <div className="card-body">
-          {templates && templates.length > 0 ? (
-            <div className="list-group">
-              {templates.map(t => (
-                <div key={t.id} className="list-group-item d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 className="mb-1">{t.name}</h6>
-                    <p className="mb-1">{t.subject}</p>
-                  </div>
-                  <div >
-                    <Link to={`/templates/new/${t.id}`} className="btn btn-sm btn-outline-secondary me-2">Edit</Link>
-                   <button className="btn btn-sm btn-success me-2" onClick={() => handleSendMail(t.id, t.name)}>Mail</button>
-                    <button className="btn btn-sm btn-success" onClick={() => handleDeleteTemplate(t.id)}>Delete</button> 
-                  </div>
+            <div className="card-body">
+        {templates && templates.length > 0 ? (
+          <div className="list-group">
+            {templates.map(t => (
+              <div
+                key={t.id}
+                className="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center"
+              >
+                <div className="mb-2 mb-md-0">
+                  <h6 className="mb-1">{t.name}</h6>
+                  <p className="mb-1">{t.subject}</p>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div>No templates found.</div>
-          )}
-        </div>
+
+                <div className="d-flex flex-wrap gap-2">
+                  <Link
+                    to={`/templates/new/${t.id}`}
+                    className="btn btn-sm btn-outline-secondary"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    className="btn btn-sm btn-success"
+                    onClick={() => handleSendMail(t.id, t.name)}
+                  >
+                    Mail
+                  </button>
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => handleDeleteTemplate(t.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div>No templates found.</div>
+        )}
+      </div>
+
       </div>
 
       <div className="card">
