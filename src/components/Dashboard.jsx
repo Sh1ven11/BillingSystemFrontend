@@ -21,7 +21,7 @@ const Dashboard = () => {
 
         setTemplates(templatesRes.data.templates || []);
         const companies = billsRes.data.companies_with_unpaid_bills ;
-        setUnpaidData({ companies: companies || [], totalAmount: billsRes.data.total_amount || 0, totalCount: billsRes.data.total_count || 0 });
+        setUnpaidData({ companies: companies || [], totalAmount: billsRes.data.total_unpaid_amount || 0, totalCount: billsRes.data.total_unpaid_bills|| 0 });
         //setUnpaidData(companies:billsRes.data.unpaidData || { companies: [], totalAmount: 0, totalCount: 0 });
         setError(null);
       } catch (err) {
@@ -106,8 +106,8 @@ const Dashboard = () => {
       <div className="card">
         <div className="card-header">
           <h5>Unpaid Bills</h5>
-          <span>Total Bills: {unpaidData.total_unpaid_bills}</span>
-          <span className="ms-2">Total Amount: ₹{unpaidData.total_unpaid_amount}</span>
+          <span>Total Bills: {unpaidData.totalCount}</span>
+          <span className="ms-2">Total Amount: ₹{unpaidData.totalAmount}</span>
         </div>
         <div className="card-body">
           {unpaidData.companies && unpaidData.companies.length > 0 ? (
