@@ -101,11 +101,10 @@ const Dashboard = () => {
                     <h6 className="mb-1">{t.name}</h6>
                     <p className="mb-1">{t.subject}</p>
                   </div>
-                  <div>
+                  <div >
                     <Link to={`/templates/new/${t.id}`} className="btn btn-sm btn-outline-secondary me-2">Edit</Link>
-                    <button className="btn btn-sm btn-success" onClick={() => handleSendMail(t.id, t.name)}>Mail</button>
-                    <button className="btn btn-sm btn-success" onClick={() => handleDeleteTemplate(t.id)}>Delete</button>
-
+                   <button className="btn btn-sm btn-success me-2" onClick={() => handleSendMail(t.id, t.name)}>Mail</button>
+                    <button className="btn btn-sm btn-success" onClick={() => handleDeleteTemplate(t.id)}>Delete</button> 
                   </div>
                 </div>
               ))}
