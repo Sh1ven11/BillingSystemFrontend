@@ -106,8 +106,8 @@ const Dashboard = () => {
       <div className="card">
         <div className="card-header">
           <h5>Unpaid Bills</h5>
-          <span>Total Bills: {unpaidData.totalCount}</span>
-          <span className="ms-2">Total Amount: ₹{unpaidData.totalAmount}</span>
+          <span>Total Bills: {unpaidData.total_unpaid_bills}</span>
+          <span className="ms-2">Total Amount: ₹{unpaidData.total_unpaid_amount}</span>
         </div>
         <div className="card-body">
           {unpaidData.companies && unpaidData.companies.length > 0 ? (
