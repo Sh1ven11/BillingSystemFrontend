@@ -60,6 +60,17 @@ const Dashboard = () => {
       alert('Failed to send email.');
     }
   };
+  const handleDeleteTemplate = async (templateId) => {
+    if (!window.confirm('Are you sure you want to delete this template?')) return;
+    try {
+      await templatesAPI.delete(templateId);
+      setTemplates(prev => prev.filter(t => t.id !== templateId));
+      alert('Template deleted successfully.');
+    } catch (err) {
+      console.error('Delete template error:', err);
+      alert('Failed to delete template.');
+    }
+  };
 
 
   if (loading) return <div className="container mt-4">Loading...</div>;
@@ -93,6 +104,8 @@ const Dashboard = () => {
                   <div>
                     <Link to={`/templates/new/${t.id}`} className="btn btn-sm btn-outline-secondary me-2">Edit</Link>
                     <button className="btn btn-sm btn-success" onClick={() => handleSendMail(t.id, t.name)}>Mail</button>
+                    <button className="btn btn-sm btn-success" onClick={() => handleDeleteTemplate(t.id)}>Delete</button>
+
                   </div>
                 </div>
               ))}
