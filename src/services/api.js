@@ -16,7 +16,7 @@ export const authAPI = {
 
 // Bills API
 export const billsAPI = {
-  getUnpaidGrouped: (params) => API.get('/bills/unpaid-grouped', { params }), 
+  getUnpaidGrouped: (params) => API.get('/bills/unpaid-bills-grouped', { params }), 
 
   getAll: () => API.get('/bills/all'),
 };
