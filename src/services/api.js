@@ -23,7 +23,7 @@ export const billsAPI = {
 
 // Templates API
 export const templatesAPI = {
-  getAll: (params) => API.get('/templates', { params });
+  getAll: (params) => API.get('/templates', { params }),
   getOne: (id) => API.get(`/templates/${id}`),
   create: (template) => API.post('/templates/post', template),
   update: (id, template) => API.put(`/templates/${id}`, template),
