@@ -11,31 +11,40 @@ const Dashboard = () => {
   const [expandedCompanies, setExpandedCompanies] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        const [templatesRes, billsRes] = await Promise.all([
-          templatesAPI.getAll(),
-          billsAPI.getUnpaidGrouped()
-        ]);
+  // New: company selection state
+  const [selectedCompany, setSelectedCompany] = useState(1); // default to KTPL
 
-        setTemplates(templatesRes.data.templates || []);
-        const companies = billsRes.data.companies_with_unpaid_bills ;
-        setUnpaidData({ companies: companies || [], totalAmount: billsRes.data.total_unpaid_amount || 0, totalCount: billsRes.data.total_unpaid_bills|| 0 });
-        //setUnpaidData(companies:billsRes.data.unpaidData || { companies: [], totalAmount: 0, totalCount: 0 });
-        setError(null);
-      } catch (err) {
-        console.error('Dashboard data load error:', err);
-        setError('Failed to load dashboard data.');
-        if (err.response?.status === 401) {
-          logout();
-        }
-      } finally {
-        setLoading(false);
+  const loadDashboardData = async (companyCode) => {
+    setLoading(true);
+    try {
+      const [templatesRes, billsRes] = await Promise.all([
+        templatesAPI.getAll({ comp: companyCode }),
+        billsAPI.getUnpaidGrouped({ comp: companyCode }),
+      ]);
+
+      setTemplates(templatesRes.data.templates || []);
+      const companies = billsRes.data.companies_with_unpaid_bills;
+      setUnpaidData({
+        companies: companies || [],
+        totalAmount: billsRes.data.total_unpaid_amount || 0,
+        totalCount: billsRes.data.total_unpaid_bills || 0,
+      });
+
+      setError(null);
+    } catch (err) {
+      console.error('Dashboard data load error:', err);
+      setError('Failed to load dashboard data.');
+      if (err.response?.status === 401) {
+        logout();
       }
-    };
-    loadDashboardData();
-  }, [logout]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboardData(selectedCompany);
+  }, [logout, selectedCompany]);
 
   const handleLogout = async () => {
     try {
@@ -47,10 +56,11 @@ const Dashboard = () => {
   };
 
   const toggleCompany = (id) => {
-    setExpandedCompanies(prev =>
-      prev.includes(id) ? prev.filter(cid => cid !== id) : [...prev, id]
+    setExpandedCompanies((prev) =>
+      prev.includes(id) ? prev.filter((cid) => cid !== id) : [...prev, id]
     );
   };
+
   const handleSendMail = async (templateId, templateName) => {
     try {
       await templatesAPI.sendMail(templateId);
@@ -60,11 +70,12 @@ const Dashboard = () => {
       alert('Failed to send email.');
     }
   };
+
   const handleDeleteTemplate = async (templateId) => {
     if (!window.confirm('Are you sure you want to delete this template?')) return;
     try {
       await templatesAPI.delete(templateId);
-      setTemplates(prev => prev.filter(t => t.id !== templateId));
+      setTemplates((prev) => prev.filter((t) => t.id !== templateId));
       alert('Template deleted successfully.');
     } catch (err) {
       console.error('Delete template error:', err);
@@ -72,6 +83,10 @@ const Dashboard = () => {
     }
   };
 
+  const handleCompanyChange = (e) => {
+    const value = parseInt(e.target.value);
+    setSelectedCompany(value);
+  };
 
   if (loading) return <div className="container mt-4">Loading...</div>;
   if (error) return <div className="container mt-4 alert alert-danger">{error}</div>;
@@ -79,12 +94,27 @@ const Dashboard = () => {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Dashboard</h1>
+        <div className="d-flex align-items-center gap-3">
+          <h1 className="mb-0">Dashboard</h1>
+
+          {/* New Dropdown */}
+          <select
+            className="form-select form-select-sm"
+            style={{ width: '150px' }}
+            value={selectedCompany}
+            onChange={handleCompanyChange}
+          >
+            <option value={1}>KTPL</option>
+            <option value={2}>MLPL</option>
+          </select>
+        </div>
+
         <button className="btn btn-outline-danger" onClick={handleLogout}>
           Logout
         </button>
       </div>
 
+      {/* Templates Section */}
       <div className="card mb-4">
         <div className="card-header d-flex justify-content-between">
           <h5>Templates</h5>
@@ -92,49 +122,50 @@ const Dashboard = () => {
             Create New Template
           </Link>
         </div>
-            <div className="card-body">
-        {templates && templates.length > 0 ? (
-          <div className="list-group">
-            {templates.map(t => (
-              <div
-                key={t.id}
-                className="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center"
-              >
-                <div className="mb-2 mb-md-0">
-                  <h6 className="mb-1">{t.name}</h6>
-                  <p className="mb-1">{t.subject}</p>
-                </div>
 
-                <div className="d-flex flex-wrap gap-2">
-                  <Link
-                    to={`/templates/new/${t.id}`}
-                    className="btn btn-sm btn-outline-secondary"
-                  >
-                    Edit
-                  </Link>
-                  <button
-                    className="btn btn-sm btn-success"
-                    onClick={() => handleSendMail(t.id, t.name)}
-                  >
-                    Mail
-                  </button>
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => handleDeleteTemplate(t.id)}
-                  >
-                    Delete
-                  </button>
+        <div className="card-body">
+          {templates && templates.length > 0 ? (
+            <div className="list-group">
+              {templates.map((t) => (
+                <div
+                  key={t.id}
+                  className="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center"
+                >
+                  <div className="mb-2 mb-md-0">
+                    <h6 className="mb-1">{t.name}</h6>
+                    <p className="mb-1">{t.subject}</p>
+                  </div>
+
+                  <div className="d-flex flex-wrap gap-2">
+                    <Link
+                      to={`/templates/new/${t.id}`}
+                      className="btn btn-sm btn-outline-secondary"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      className="btn btn-sm btn-success"
+                      onClick={() => handleSendMail(t.id, t.name)}
+                    >
+                      Mail
+                    </button>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => handleDeleteTemplate(t.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div>No templates found.</div>
-        )}
+              ))}
+            </div>
+          ) : (
+            <div>No templates found.</div>
+          )}
+        </div>
       </div>
 
-      </div>
-
+      {/* Unpaid Bills Section */}
       <div className="card">
         <div className="card-header">
           <h5>Unpaid Bills</h5>
@@ -143,21 +174,25 @@ const Dashboard = () => {
         </div>
         <div className="card-body">
           {unpaidData.companies && unpaidData.companies.length > 0 ? (
-            unpaidData.companies.map(c => (
+            unpaidData.companies.map((c) => (
               <div key={c.id} className="mb-3">
                 <div className="d-flex justify-content-between align-items-center">
-                  <h6>{c.name} ({c.bills.length} bills)</h6>
+                  <h6>
+                    {c.name} ({c.bills.length} bills)
+                  </h6>
                   <button
                     className="btn btn-sm btn-outline-primary"
                     onClick={() => toggleCompany(c.id)}
                   >
-                    {expandedCompanies.includes(c.id) ? "Hide Bills" : "Show Bills"}
+                    {expandedCompanies.includes(c.id) ? 'Hide Bills' : 'Show Bills'}
                   </button>
                 </div>
                 {expandedCompanies.includes(c.id) && (
                   <ul className="mt-2">
-                    {c.bills.map(b => (
-                      <li key={b.id}>{b.inv_no} - ₹{b.amount_unpaid}</li>
+                    {c.bills.map((b) => (
+                      <li key={b.id}>
+                        {b.inv_no} - ₹{b.amount_unpaid}
+                      </li>
                     ))}
                   </ul>
                 )}
