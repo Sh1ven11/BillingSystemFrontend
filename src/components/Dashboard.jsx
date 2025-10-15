@@ -21,7 +21,7 @@ const Dashboard = () => {
         templatesAPI.getAll({ comp: companyCode }),
         billsAPI.getUnpaidGrouped({ comp: companyCode }),
       ]);
-
+      console.log(companyCode);
       setTemplates(templatesRes.data.templates || []);
       const companies = billsRes.data.companies_with_unpaid_bills;
       setUnpaidData({
