@@ -16,14 +16,14 @@ export const authAPI = {
 
 // Bills API
 export const billsAPI = {
-  getUnpaidGrouped: (params) => axios.get('/bills/unpaid-grouped', { params }), 
+  getUnpaidGrouped: (params) => API.get('/bills/unpaid-grouped', { params }), 
 
   getAll: () => API.get('/bills/all'),
 };
 
 // Templates API
 export const templatesAPI = {
-  getAll: (params) => axios.get('/templates', { params }), // ✅ adds ?comp=1
+  getAll: (params) => API.get('/templates', { params });
   getOne: (id) => API.get(`/templates/${id}`),
   create: (template) => API.post('/templates/post', template),
   update: (id, template) => API.put(`/templates/${id}`, template),
